@@ -1,19 +1,6 @@
 (function(){
-var rows=document.querySelectorAll('tr.call-village');
-var units=document.querySelectorAll('.unit_checkbox');
-var cells=document.querySelectorAll('td[data-unit]');
 var x=document.createElement('div');
-
-x.style.cssText=
-'position:fixed;top:10px;left:10px;right:10px;z-index:999999;'+
-'background:#fff;border:3px solid #000;padding:15px;font-size:16px;color:#000;';
-
-x.innerHTML=
-'<b>DK DIAGNOSTIKA</b><br>'+
-'Dediny: '+rows.length+'<br>'+
-'Checkboxy jednotiek: '+units.length+'<br>'+
-'Bunky jednotiek: '+cells.length+'<br>'+
-'URL screen: '+location.href;
-
+x.style.cssText='position:fixed;top:5px;left:5px;right:5px;bottom:5px;z-index:999999;background:white;color:black;border:3px solid black;padding:10px;font-size:13px;overflow:auto;';
+x.textContent=document.body.innerText.slice(0,10000);
 document.body.appendChild(x);
 })();
