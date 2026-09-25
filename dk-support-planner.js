@@ -20,29 +20,37 @@ let clockReady=false;
 ========================= */
 
 function sec(t){
- const m=String(t||'').match(/(\d+):(\d{2}):(\d{2})/);
+
+ const m=String(t||'').match(
+  /(\d+):(\d{2}):(\d{2})/
+ );
+
  return m
-  ? +m[1]*3600 + +m[2]*60 + +m[3]
-  : 0;
+  ? +m[1]*3600+
+    +m[2]*60+
+    +m[3]
+  :0;
 }
 
 
 function fmt(s){
+
  s=((Math.floor(s)%86400)+86400)%86400;
 
  return Math.floor(s/3600)+':'+
- String(Math.floor(s%3600/60)).padStart(2,'0')+':'+
- String(s%60).padStart(2,'0');
+  String(Math.floor(s%3600/60)).padStart(2,'0')+':'+
+  String(s%60).padStart(2,'0');
 }
 
 
 function localSec(){
+
  const d=new Date();
 
  return d.getHours()*3600+
-        d.getMinutes()*60+
-        d.getSeconds()+
-        d.getMilliseconds()/1000;
+  d.getMinutes()*60+
+  d.getSeconds()+
+  d.getMilliseconds()/1000;
 }
 
 
@@ -59,16 +67,21 @@ function syncClock(){
  ];
 
  for(const s of els){
+
   const e=document.querySelector(s);
 
   if(e){
+
    txt=e.textContent||'';
+
    break;
   }
  }
 
 
- const m=txt.match(/\b(\d{1,2}):(\d{2}):(\d{2})\b/);
+ const m=txt.match(
+  /\b(\d{1,2}):(\d{2}):(\d{2})\b/
+ );
 
 
  if(m){
@@ -91,8 +104,11 @@ function syncClock(){
 
   let diff=server-local;
 
-  if(diff>43200)diff-=86400;
-  if(diff<-43200)diff+=86400;
+  if(diff>43200)
+   diff-=86400;
+
+  if(diff<-43200)
+   diff+=86400;
 
   clockOffset=diff;
   clockReady=true;
@@ -103,7 +119,9 @@ function syncClock(){
 
  if(typeof server_utc_diff!=='undefined'){
 
-  clockOffset=Number(server_utc_diff)||0;
+  clockOffset=
+   Number(server_utc_diff)||0;
+
   clockReady=true;
  }
 }
@@ -126,7 +144,10 @@ function selected(){
 
  return U.filter(function(u){
 
-  const e=document.getElementById('checkbox_'+u);
+  const e=
+   document.getElementById(
+    'checkbox_'+u
+   );
 
   return e&&e.checked;
  });
@@ -134,7 +155,7 @@ function selected(){
 
 
 /* =========================
-   NAJDLHŠÍ ČAS CESTY
+   NAJDLHŠIA CESTA
 ========================= */
 
 function travel(row){
@@ -143,23 +164,25 @@ function travel(row){
 
  selected().forEach(function(u){
 
-  const td=row.querySelector(
-   'td[data-unit="'+u+'"]'
-  );
+  const td=
+   row.querySelector(
+    'td[data-unit="'+u+'"]'
+   );
 
   if(!td)return;
 
 
-  const input=td.querySelector(
-   '.call-unit-box'
-  );
+  const input=
+   td.querySelector(
+    '.call-unit-box'
+   );
 
   let amount=0;
 
 
   /*
-   Ak je dedina vybraná a používateľ
-   zadal konkrétne množstvo, použijeme ho.
+   Ak je dedina označená a množstvo
+   bolo ručne zadané, použijeme ho.
   */
 
   if(
@@ -168,7 +191,8 @@ function travel(row){
    String(input.value).trim()!==''
   ){
 
-   amount=parseInt(input.value,10)||0;
+   amount=
+    parseInt(input.value,10)||0;
 
   }else{
 
@@ -184,8 +208,11 @@ function travel(row){
 
 
   /*
-   Desktop používa data-title,
-   mobil title.
+   Desktop:
+   data-title
+
+   Mobil:
+   title
   */
 
   const t=sec(
@@ -210,22 +237,22 @@ function travel(row){
 
 function arrival(){
 
- const e=document.getElementById(
-  'dkArrivalTime'
- );
+ const e=
+  document.getElementById(
+   'dkArrivalTime'
+  );
 
  if(!e||!e.value)
   return null;
 
 
- const p=e.value
-  .split(':')
-  .map(Number);
+ const p=
+  e.value.split(':').map(Number);
 
 
  return p[0]*3600+
-        p[1]*60+
-        (p[2]||0);
+  p[1]*60+
+  (p[2]||0);
 }
 
 
@@ -247,8 +274,8 @@ function calculate(){
 
 
  /*
-   Ak je zadaný čas už dnes
-   a nestíhame ho, použijeme zajtra.
+   Ak už dnešný čas nestíhame,
+   plánujeme nasledujúci deň.
  */
 
  while(target<n)
@@ -256,19 +283,24 @@ function calculate(){
 
 
  document
-  .querySelectorAll('tr.call-village')
+  .querySelectorAll(
+   'tr.call-village'
+  )
   .forEach(function(row){
 
-   let cell=row.querySelector(
-    '.dkPlannerCell'
-   );
+   let cell=
+    row.querySelector(
+     '.dkPlannerCell'
+    );
 
 
    if(!cell){
 
-    cell=document.createElement('td');
+    cell=
+     document.createElement('td');
 
-    cell.className='dkPlannerCell';
+    cell.className=
+     'dkPlannerCell';
 
     row.appendChild(cell);
    }
@@ -288,22 +320,28 @@ function calculate(){
    }
 
 
-   const dep=target-t;
+   const dep=
+    target-t;
 
-   const ready=dep>=n;
+   const ready=
+    dep>=n;
 
 
    cell.innerHTML=
+
     '<div class="dkDep">'+
-    'Odchod <b>'+fmt(dep)+'</b>'+
-    '</div>'+
+    'Odchod <b>'+
+    fmt(dep)+
+    '</b></div>'+
 
     '<div class="dkArr">'+
-    'Príchod <b>'+fmt(target)+'</b>'+
-    '</div>'+
+    'Príchod <b>'+
+    fmt(target)+
+    '</b></div>'+
 
     '<div class="dkTravel">'+
-    'Cesta '+fmt(t)+
+    'Cesta '+
+    fmt(t)+
     '</div>'+
 
     '<div class="dkStatus '+
@@ -341,6 +379,10 @@ function build(){
   return;
 
 
+ /* =========================
+    CSS
+ ========================= */
+
  const style=
   document.createElement('style');
 
@@ -353,22 +395,27 @@ function build(){
  'border:1px solid #c7b99a;'+
  'background:rgba(255,255,255,.55);'+
  'font-size:13px;'+
- 'line-height:27px;'+
+ 'line-height:28px;'+
  'box-sizing:border-box;'+
- '}'+
-
-
- '#dkPlannerTitle{'+
- 'font-weight:700;'+
- 'margin-right:10px;'+
+ 'width:max-content;'+
+ 'min-width:100%;'+
  '}'+
 
 
  '.dkPlannerRow{'+
  'display:flex;'+
  'align-items:center;'+
- 'gap:5px;'+
- 'flex-wrap:wrap;'+
+ 'flex-wrap:nowrap;'+
+ 'gap:6px;'+
+ 'white-space:nowrap;'+
+ 'width:max-content;'+
+ '}'+
+
+
+ '#dkPlannerTitle{'+
+ 'font-weight:700;'+
+ 'white-space:nowrap;'+
+ 'margin-right:5px;'+
  '}'+
 
 
@@ -378,26 +425,18 @@ function build(){
  'box-sizing:border-box;'+
  'padding:2px 5px;'+
  'font-size:13px;'+
+ 'flex:0 0 auto;'+
  '}'+
 
 
  '#dkSupportPlanner button{'+
  'height:27px;'+
- 'padding:2px 9px;'+
+ 'padding:2px 10px;'+
  'margin:0;'+
  'cursor:pointer;'+
  'font-size:12px;'+
  'white-space:nowrap;'+
- '}'+
-
-
- '#dkCalculate{'+
- 'margin-left:2px!important;'+
- '}'+
-
-
- '#dkMarkReady{'+
- 'margin-left:2px!important;'+
+ 'flex:0 0 auto;'+
  '}'+
 
 
@@ -432,27 +471,34 @@ function build(){
  '.dkNoUnits{color:#888}'+
 
 
- /*
-   MOBIL
- */
+ /* =========================
+    MOBIL
+ ========================= */
 
  '@media(max-width:600px){'+
 
  '#dkSupportPlanner{'+
- 'padding:7px;'+
+ 'padding:6px 8px;'+
  'font-size:12px;'+
- 'line-height:30px;'+
+ 'line-height:29px;'+
+ 'width:max-content;'+
+ 'min-width:100%;'+
+ 'overflow:visible;'+
  '}'+
 
 
  '.dkPlannerRow{'+
+ 'display:flex;'+
+ 'flex-wrap:nowrap;'+
+ 'align-items:center;'+
  'gap:5px;'+
+ 'width:max-content;'+
+ 'white-space:nowrap;'+
  '}'+
 
 
  '#dkPlannerTitle{'+
- 'width:100%;'+
- 'margin:0 0 2px 0;'+
+ 'margin-right:4px;'+
  '}'+
 
 
@@ -466,12 +512,7 @@ function build(){
  '#dkSupportPlanner button{'+
  'height:29px;'+
  'font-size:11px;'+
- 'padding:2px 7px;'+
- '}'+
-
-
- '#dkMarkReady{'+
- 'margin-left:0!important;'+
+ 'padding:2px 8px;'+
  '}'+
 
 
@@ -482,12 +523,12 @@ function build(){
 
 
  '.dkTravel{'+
- 'font-size:9px'+
+ 'font-size:9px;'+
  '}'+
 
 
  '.dkStatus{'+
- 'font-size:10px'+
+ 'font-size:10px;'+
  '}'+
 
  '}';
@@ -503,7 +544,8 @@ function build(){
  const panel=
   document.createElement('div');
 
- panel.id='dkSupportPlanner';
+ panel.id=
+  'dkSupportPlanner';
 
 
  panel.innerHTML=
@@ -560,9 +602,11 @@ function build(){
   const th=
    document.createElement('th');
 
-  th.textContent='Plánovač';
+  th.textContent=
+   'Plánovač';
 
-  th.className='dkPlannerHead';
+  th.className=
+   'dkPlannerHead';
 
   head.appendChild(th);
  }
@@ -588,8 +632,10 @@ function build(){
 
 
  /*
-   Prepočet pri zmene jednotiek,
-   množstva alebo výbere dediny.
+   Automatický prepočet pri:
+   - zmene jednotiek
+   - zmene množstva
+   - označení dediny
  */
 
  document.addEventListener(
@@ -667,7 +713,7 @@ function build(){
 
  /*
    Priebežná synchronizácia
-   serverového času.
+   hodín.
  */
 
  setInterval(
