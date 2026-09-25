@@ -1,0 +1,1 @@
+alert('DK TEST FUNGUJE');
