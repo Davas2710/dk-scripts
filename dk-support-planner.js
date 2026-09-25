@@ -4,95 +4,106 @@
 if(!location.href.includes('screen=place')||!location.href.includes('mode=call'))return;
 if(document.getElementById('dkSupportPlanner'))return;
 
-const units=['spear','sword','axe','archer','spy','light','marcher','heavy','ram','catapult','knight','snob'];
+var units=['spear','sword','axe','archer','spy','light','marcher','heavy','ram','catapult','knight','snob'];
 
 function sec(t){
- const m=String(t||'').match(/(\d+):(\d{2}):(\d{2})/);
+ var m=String(t||'').match(/(\d+):(\d{2}):(\d{2})/);
  return m?+m[1]*3600+ +m[2]*60+ +m[3]:0;
 }
 
 function fmt(s){
  s=((s%86400)+86400)%86400;
- return Math.floor(s/3600)+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+ return Math.floor(s/3600)+':'+
+ String(Math.floor((s%3600)/60)).padStart(2,'0')+':'+
+ String(s%60).padStart(2,'0');
 }
 
 function nowSec(){
- const e=document.querySelector('#serverTime,#server_time,.server-time,.server-time-container');
+ var e=document.querySelector('#serverTime,#server_time,.server-time,.server-time-container');
  if(e){
-  const m=e.textContent.match(/(\d{1,2}):(\d{2}):(\d{2})/);
+  var m=e.textContent.match(/(\d{1,2}):(\d{2}):(\d{2})/);
   if(m)return +m[1]*3600+ +m[2]*60+ +m[3];
  }
- const d=new Date();
+ var d=new Date();
  return d.getHours()*3600+d.getMinutes()*60+d.getSeconds();
 }
 
 function selected(){
- return units.filter(u=>{
-  const e=document.getElementById('checkbox_'+u);
+ return units.filter(function(u){
+  var e=document.getElementById('checkbox_'+u);
   return e&&e.checked;
  });
 }
 
 function travel(row){
- let max=0;
- selected().forEach(u=>{
-  const td=row.querySelector('td[data-unit="'+u+'"]');
+ var max=0;
+
+ selected().forEach(function(u){
+  var td=row.querySelector('td[data-unit="'+u+'"]');
   if(!td)return;
 
-  const input=td.querySelector('.call-unit-box');
-  let n;
+  var input=td.querySelector('.call-unit-box');
+  var n;
 
-  if(input&&!input.disabled&&input.value.trim()!=='')
+  if(input&&!input.disabled&&String(input.value).trim()!==''){
    n=parseInt(input.value,10);
-  else
-   n=parseInt(td.dataset.count,10);
+  }else{
+   n=parseInt(td.getAttribute('data-count'),10);
+  }
 
-  if(!isNaN(n)&&n>0)
-   max=Math.max(max,sec(td.dataset.title));
+  if(!isNaN(n)&&n>0){
+   var t=sec(td.getAttribute('data-title'));
+   if(t>max)max=t;
+  }
  });
+
  return max;
 }
 
-const first=document.querySelector('tr.call-village');
+var first=document.querySelector('tr.call-village');
 if(!first)return;
 
-const table=first.closest('table');
+var table=first.closest('table');
 if(!table)return;
 
-const panel=document.createElement('div');
+var panel=document.createElement('div');
 panel.id='dkSupportPlanner';
 panel.style.cssText=
-'margin:8px 0;padding:7px 9px;border:1px solid #aaa;'+
-'background:#f5f5f5;font-size:13px;';
+'margin:8px 0;padding:8px;border:1px solid #999;'+
+'background:#f5f5f5;font-size:13px;line-height:20px;';
 
 panel.innerHTML=
-'<b>Plánovač podpory</b> &nbsp;'+
+'<b>Plánovač podpory</b><br>'+
 'Požadovaný príchod: '+
-'<input id="dkArrivalTime" type="time" step="1" value="20:00:00" style="width:105px"> '+
-'<button id="dkMarkReady" type="button">Označiť tie, ktoré stíhajú</button>';
+'<input id="dkArrivalTime" type="time" step="1" value="20:00:00" '+
+'style="width:105px;height:28px;"> '+
+'<button id="dkCalculate" type="button" style="height:28px;">Vypočítať</button> '+
+'<button id="dkMarkReady" type="button" style="height:28px;">Označiť stíhajúce</button>';
 
 table.parentNode.insertBefore(panel,table);
 
-const head=table.querySelector('thead tr');
+var head=table.querySelector('thead tr');
 if(head){
- const th=document.createElement('th');
+ var th=document.createElement('th');
  th.textContent='Plánovač';
  head.appendChild(th);
 }
 
 function calculate(){
- const value=document.getElementById('dkArrivalTime').value;
+ var input=document.getElementById('dkArrivalTime');
+ if(!input)return;
+
+ var value=input.value;
  if(!value)return;
 
- const p=value.split(':').map(Number);
- const target0=p[0]*3600+p[1]*60+(p[2]||0);
- const current=nowSec();
+ var p=value.split(':').map(Number);
+ var target=p[0]*3600+p[1]*60+(p[2]||0);
+ var current=nowSec();
 
- let target=target0;
  if(target<=current)target+=86400;
 
- document.querySelectorAll('tr.call-village').forEach(row=>{
-  let cell=row.querySelector('.dkPlannerCell');
+ document.querySelectorAll('tr.call-village').forEach(function(row){
+  var cell=row.querySelector('.dkPlannerCell');
 
   if(!cell){
    cell=document.createElement('td');
@@ -100,16 +111,16 @@ function calculate(){
    row.appendChild(cell);
   }
 
-  const t=travel(row);
+  var t=travel(row);
 
   if(!t){
    cell.innerHTML='<span style="color:#888">—</span>';
-   row.dataset.dkReady='0';
+   row.setAttribute('data-dk-ready','0');
    return;
   }
 
-  const departure=target-t;
-  const ok=departure>=current;
+  var departure=target-t;
+  var ok=departure>=current;
 
   cell.innerHTML=
    '<b>Odchod:</b> '+fmt(departure)+
@@ -118,27 +129,39 @@ function calculate(){
    '<br><b style="color:'+(ok?'green':'red')+'">'+
    (ok?'STÍHA':'NESTÍHA')+'</b>';
 
-  row.dataset.dkReady=ok?'1':'0';
+  row.setAttribute('data-dk-ready',ok?'1':'0');
  });
 }
 
-document.getElementById('dkArrivalTime')
- .addEventListener('change',calculate);
+document.getElementById('dkCalculate').onclick=function(){
+ calculate();
+};
 
-document.querySelectorAll('.unit_checkbox')
- .forEach(e=>e.addEventListener('change',()=>setTimeout(calculate,100)));
+document.getElementById('dkArrivalTime').onchange=function(){
+ calculate();
+};
 
-document.addEventListener('change',e=>{
- if(e.target.matches('.call-unit-box,.troop-request-selector'))
-  setTimeout(calculate,100);
+document.getElementById('dkArrivalTime').oninput=function(){
+ calculate();
+};
+
+document.addEventListener('change',function(e){
+ if(e.target&&(
+  e.target.classList.contains('unit_checkbox')||
+  e.target.classList.contains('call-unit-box')||
+  e.target.classList.contains('troop-request-selector')
+  )){
+  setTimeout(calculate,50);
+ }
 });
 
 document.getElementById('dkMarkReady').onclick=function(){
- document.querySelectorAll('tr.call-village').forEach(row=>{
-  const cb=row.querySelector('.troop-request-selector');
+ document.querySelectorAll('tr.call-village').forEach(function(row){
+  var cb=row.querySelector('.troop-request-selector');
   if(!cb)return;
 
-  const ready=row.dataset.dkReady==='1';
+  var ready=row.getAttribute('data-dk-ready')==='1';
+
   if(cb.checked!==ready)cb.click();
  });
 };
