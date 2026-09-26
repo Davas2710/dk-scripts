@@ -29,8 +29,6 @@ const MAX_ATTEMPTS=5;
 
 const STORAGE_NEXT='dk_dalsi_oznaceni';
 const STORAGE_ATTEMPTS='dk_pokusy';
-const STORAGE_STOPPED='dk_auto_oznacovani_stop';
-const STORAGE_ACTION='dk_auto_oznacovani_action';
 
 
 /* =========================================
@@ -49,6 +47,16 @@ let attempts=parseInt(
 
 function pad(n){
  return String(n).padStart(2,'0');
+}
+
+
+function clock(){
+
+ const d=new Date();
+
+ return pad(d.getHours())+':'+
+        pad(d.getMinutes())+':'+
+        pad(d.getSeconds());
 }
 
 
@@ -104,77 +112,6 @@ function randomDelay(){
 
 
 /* =========================================
-   ZASTAVENIE
-========================================= */
-
-function isStopped(){
-
- return localStorage.getItem(
-  STORAGE_STOPPED
- )==='1';
-
-}
-
-
-function stop(){
-
- localStorage.setItem(
-  STORAGE_STOPPED,
-  '1'
- );
-
- localStorage.removeItem(
-  STORAGE_NEXT
- );
-
- localStorage.removeItem(
-  STORAGE_ACTION
- );
-
- setStatus(
-  'Zastavené',
-  'bad'
- );
-
- updatePanel();
-
- console.log(
-  'DK Auto Označování: zastavené.'
- );
-
-}
-
-
-/* =========================================
-   SPUSTENIE
-========================================= */
-
-function resume(){
-
- localStorage.removeItem(
-  STORAGE_STOPPED
- );
-
- localStorage.removeItem(
-  STORAGE_ACTION
- );
-
- updatePanel();
-
- setStatus(
-  'Kontrolujem...',
-  'wait'
- );
-
- setTimeout(
-  oznac,
-  100
- );
-
-}
-
-
-/* =========================================
    NASTAVENIE ĎALŠEJ KONTROLY
 ========================================= */
 
@@ -216,7 +153,6 @@ function resetAttempts(){
  );
 
  updatePanel();
-
 }
 
 
@@ -243,22 +179,17 @@ function failedAttempt(){
    'bad'
   );
 
-  localStorage.setItem(
-   STORAGE_STOPPED,
-   '1'
-  );
-
   console.warn(
    'DK Auto Označování: príliš veľa '+
    'neúspešných pokusov ('+
-   attempts+'/'+MAX_ATTEMPTS+').'
+   attempts+
+   '/'+MAX_ATTEMPTS+').'
   );
 
   return false;
  }
 
  return true;
-
 }
 
 
@@ -281,7 +212,6 @@ function setStatus(text,type){
  e.className=
   'dkAutoStatus '+
   (type||'normal');
-
 }
 
 
@@ -297,57 +227,15 @@ function updatePanel(){
    'dkAutoAttempts'
   );
 
- const statusEl=
-  document.getElementById(
-   'dkAutoStatus'
-  );
-
- const stopBtn=
-  document.getElementById(
-   'dkAutoStop'
-  );
-
-
  if(remainingEl)
   remainingEl.textContent=
    formatRemaining(remaining());
 
-
  if(attemptsEl)
   attemptsEl.textContent=
    attempts+'/'+MAX_ATTEMPTS;
-
-
- if(isStopped()){
-
-  if(statusEl){
-
-   statusEl.textContent=
-    'Zastavené';
-
-   statusEl.className=
-    'dkAutoStatus bad';
-
-  }
-
-  if(stopBtn)
-   stopBtn.textContent='Spustiť';
-
- }
-
- else{
-
-  if(stopBtn)
-   stopBtn.textContent='Zastaviť';
-
- }
-
 }
 
-
-/* =========================================
-   VYTVORENIE PANELU
-========================================= */
 
 function createPanel(){
 
@@ -491,6 +379,10 @@ function createPanel(){
  '</div>';
 
 
+ /*
+  Vloženie nad hlavný obsah.
+ */
+
  const target=
   document.querySelector(
    '#content_value'
@@ -507,9 +399,9 @@ function createPanel(){
  );
 
 
- /* =====================================
-    RUČNÁ KONTROLA
- ===================================== */
+ /*
+  Ručná kontrola.
+ */
 
  document.getElementById(
   'dkAutoNow'
@@ -517,14 +409,6 @@ function createPanel(){
 
   localStorage.removeItem(
    STORAGE_NEXT
-  );
-
-  localStorage.removeItem(
-   STORAGE_ACTION
-  );
-
-  localStorage.removeItem(
-   STORAGE_STOPPED
   );
 
   setStatus(
@@ -538,33 +422,35 @@ function createPanel(){
    oznac,
    100
   );
-
  };
 
 
- /* =====================================
-    ZASTAVIŤ / SPUSTIŤ
- ===================================== */
+ /*
+  Zastavenie.
+ */
 
  document.getElementById(
   'dkAutoStop'
  ).onclick=function(){
 
-  if(isStopped()){
+  localStorage.removeItem(
+   STORAGE_NEXT
+  );
 
-   resume();
+  setStatus(
+   'Zastavené',
+   'bad'
+  );
 
-  }else{
+  updatePanel();
 
-   stop();
-
-  }
-
+  console.log(
+   'DK Auto Označování: zastavené.'
+  );
  };
 
 
  return panel;
-
 }
 
 
@@ -573,10 +459,6 @@ function createPanel(){
 ========================================= */
 
 function oznac(){
-
- if(isStopped())
-  return;
-
 
  setStatus(
   'Hľadám útoky...',
@@ -602,23 +484,20 @@ function oznac(){
    'bad'
   );
 
-
   if(!failedAttempt())
    return;
-
 
   setNextRun();
 
   scheduleReload();
 
   return;
-
  }
 
 
- /* =====================================
-    VYBER VŠETKO
- ===================================== */
+ /*
+  Vyber všetko.
+ */
 
  selectAllBtn.click();
 
@@ -634,9 +513,10 @@ function oznac(){
  );
 
 
- /* =====================================
-    HĽADANIE OZNAČENIA
- ===================================== */
+ /*
+  Malá pauza, aby DK stihlo
+  spracovať výber.
+ */
 
  setTimeout(function(){
 
@@ -663,36 +543,29 @@ function oznac(){
     ).trim().toLowerCase();
 
 
+   /*
+    Hľadáme tlačidlo označenia.
+
+    Používame viac možností kvôli
+    rôznym jazykovým verziám DK.
+   */
+
    if(
     text.includes('označ')||
     text.includes('oznac')||
     text.includes('mark')
    ){
 
-    /* ================================
-       DÔLEŽITÉ:
-       Najprv uložíme stav.
-       AŽ POTOM klikneme.
-    ================================= */
+    /*
+     Nastavíme ďalšiu kontrolu
+     ešte pred kliknutím.
+    */
 
-    const next=
-     setNextRun();
-
-
-    localStorage.setItem(
-     STORAGE_ACTION,
-     'marking'
-    );
-
-
-    localStorage.setItem(
-     STORAGE_STOPPED,
-     '0'
-    );
+    setNextRun();
 
 
     setStatus(
-     'Označujem a obnovujem stránku...',
+     'Označujem...',
      'ok'
     );
 
@@ -700,43 +573,26 @@ function oznac(){
     clicked=true;
 
 
+    /*
+     Reset úspešného pokusu.
+    */
+
     resetAttempts();
 
 
-    console.log(
-     'DK Auto Označování: '+
-     'označujem útoky.'
-    );
-
-
-    console.log(
-     'DK Auto Označování: '+
-     'ďalšia kontrola za '+
-     formatRemaining(
-      next-Date.now()
-     )
-    );
-
-
     /*
-     * DK po kliknutí pravdepodobne
-     * obnoví/naviguje stránku.
-     *
-     * Stav je už uložený v localStorage,
-     * takže po novom načítaní skript
-     * pokračuje automaticky.
-     */
+     Kliknutie vyvolá natívnu akciu DK,
+     ktorá stránku obnoví.
+    */
 
     btn.click();
-
    }
-
   });
 
 
-  /* ===================================
-     NIČ SA NENAŠLO
-  =================================== */
+  /*
+   Tlačidlo sa nenašlo.
+  */
 
   if(!clicked){
 
@@ -759,61 +615,9 @@ function oznac(){
    setNextRun();
 
    scheduleReload();
-
   }
 
  },1500);
-
-}
-
-
-/* =========================================
-   KONTROLA STAVU PO RELOAD
-========================================= */
-
-function handleReloadState(){
-
- const action=
-  localStorage.getItem(
-   STORAGE_ACTION
-  );
-
-
- if(action==='marking'){
-
-  /*
-   * Označenie bolo spustené pred
-   * predchádzajúcim reloadom.
-   *
-   * Ak sme už späť na stránke,
-   * akcia sa považuje za dokončenú.
-   */
-
-  localStorage.removeItem(
-   STORAGE_ACTION
-  );
-
-
-  const next=
-   getNextTime();
-
-
-  if(next){
-
-   setStatus(
-    'Označenie dokončené – čakám',
-    'ok'
-   );
-
-   console.log(
-    'DK Auto Označování: stránka sa obnovila '+
-    'po označení. Pokračujem ďalej.'
-   );
-
-  }
-
- }
-
 }
 
 
@@ -823,10 +627,6 @@ function handleReloadState(){
 
 function scheduleReload(){
 
- if(isStopped())
-  return;
-
-
  const ms=
   remaining();
 
@@ -835,16 +635,12 @@ function scheduleReload(){
 
   setTimeout(
    function(){
-
-    if(!isStopped())
-     location.reload();
-
+    location.reload();
    },
    60000
   );
 
   return;
-
  }
 
 
@@ -856,14 +652,10 @@ function scheduleReload(){
 
  setTimeout(
   function(){
-
-   if(!isStopped())
-    location.reload();
-
+   location.reload();
   },
   ms
  );
-
 }
 
 
@@ -877,34 +669,14 @@ function start(){
 
  updatePanel();
 
- handleReloadState();
-
-
- /* =====================================
-    ZASTAVENÉ
- ===================================== */
-
- if(isStopped()){
-
-  setStatus(
-   'Zastavené',
-   'bad'
-  );
-
-  updatePanel();
-
-  return;
-
- }
-
-
- /* =====================================
-    EXISTUJE NAPLÁNOVANÁ KONTROLA
- ===================================== */
 
  const next=
   getNextTime();
 
+
+ /*
+  Existuje naplánovaná kontrola.
+ */
 
  if(next){
 
@@ -918,18 +690,19 @@ function start(){
    console.log(
     'DK Auto Označování: čakám. '+
     'Ďalšia kontrola za '+
-    formatRemaining(
-     next-Date.now()
-    )
+    formatRemaining(next-Date.now())
    );
 
 
    scheduleReload();
 
    return;
-
   }
 
+
+  /*
+   Čas už vypršal.
+  */
 
   setStatus(
    'Kontrolujem...',
@@ -939,13 +712,12 @@ function start(){
   oznac();
 
   return;
-
  }
 
 
- /* =====================================
-    ŽIADNY PLÁN → PRVÁ KONTROLA
- ===================================== */
+ /*
+  Prvé spustenie.
+ */
 
  setStatus(
   'Kontrolujem...',
@@ -953,12 +725,11 @@ function start(){
  );
 
  oznac();
-
 }
 
 
 /* =========================================
-   AKTUALIZÁCIA PANELU
+   AKTUALIZÁCIA ODPOČTU
 ========================================= */
 
 setInterval(
@@ -971,10 +742,13 @@ setInterval(
 );
 
 
+/* =========================================
+   SPUSTENIE
+========================================= */
+
 console.log(
  'DK Auto Označování spustený.'
 );
-
 
 start();
 
